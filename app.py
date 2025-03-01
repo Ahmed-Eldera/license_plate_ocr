@@ -1,37 +1,68 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
 from ultralytics import YOLO
-from PIL import Image, ImageDraw, ImageFont
 
-# Load YOLO model (Make sure the model path is correct)
+# Load YOLO model
 model = YOLO(r"C:\Users\hotoe\Desktop\new models\best.pt")
 
 # Load image
-image_path = r"C:\Users\hotoe\Desktop\civic.jpg"  # Replace with your image path
-image = Image.open(image_path)
+image_path = r"C:\Users\hotoe\Desktop\der.jpg"
+image = cv2.imread(image_path)
+image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB for Matplotlib
 
-# Run inference
-results = model(image_path)[0]  # Get the first detection result
+# Run YOLO inference
+results = model(image)[0]
 
-# Initialize drawing
-draw = ImageDraw.Draw(image)
-font = ImageFont.load_default()  # Default font, can be replaced with a TTF font
+for box in results.boxes.xyxy:
+    x1, y1, x2, y2 = map(int, box.tolist())
 
-# Loop through detections
-for box, conf, cls in zip(results.boxes.xyxy, results.boxes.conf, results.boxes.cls):
-    x1, y1, x2, y2 = box.tolist()
-    confidence = conf.item()
+    # Crop detected license plate
+    plate = image[y1:y2, x1:x2]
 
-    # Get class label (if available)
-    class_id = int(cls.item())  # Convert to integer
-    class_name = model.names[class_id] if model.names else f"ID {class_id}"
+    # Convert to grayscale
+    gray = cv2.cvtColor(plate, cv2.COLOR_RGB2GRAY)
 
-    # Draw bounding box
-    draw.rectangle([x1, y1, x2, y2], outline="red", width=3)
+    # Apply edge detection
+    edges = cv2.Canny(gray, 50, 200)
 
-    # Display class name and confidence
-    label = f"{class_name}: {confidence:.2f}"
-    text_size = draw.textbbox((x1, y1), label, font=font)  # Get text bounding box
-    draw.rectangle([text_size[0], text_size[1], text_size[2], text_size[3]], fill="red")  # Background for text
-    draw.text((x1, y1), label, fill="white", font=font)  # Write text
+    # Detect lines using Hough Transform
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 50, minLineLength=30, maxLineGap=10)
 
-# Show the image with detections
-image.show()
+    if lines is not None:
+        angles = []
+        for line in lines:
+            x1, y1, x2, y2 = line[0]
+            angle = np.degrees(np.arctan2(y2 - y1, x2 - x1))  # Calculate angle
+            angles.append(angle)
+
+        if angles:
+            median_angle = np.median(angles)  # Get the most common angle
+            print(f"Detected Angle: {median_angle}")
+
+            # Get rotation matrix
+            h, w = plate.shape[:2]
+            M = cv2.getRotationMatrix2D((w // 2, h // 2), median_angle, 1.0)
+
+            # Rotate the plate
+            rotated_plate = cv2.warpAffine(plate, M, (w, h))
+
+            # Convert to RGB for Matplotlib
+            rotated_plate_rgb = cv2.cvtColor(rotated_plate, cv2.COLOR_BGR2RGB)
+
+            # Display images using Matplotlib
+            fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+            axes[0].imshow(image)
+            axes[0].set_title("Original Image")
+            axes[0].axis("off")
+
+            axes[1].imshow(plate)
+            axes[1].set_title("Cropped Plate")
+            axes[1].axis("off")
+
+            axes[2].imshow(rotated_plate_rgb)
+            axes[2].set_title("Corrected Plate")
+            axes[2].axis("off")
+
+            plt.show()

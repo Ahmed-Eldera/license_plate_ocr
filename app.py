@@ -5,17 +5,8 @@ from ultralytics import YOLO
 
 
 def detect_hough_lines(image):
-    """
-    Detects and overlays Hough lines on the given image.
-
-    Parameters:
-        image (numpy array): The input image.
-
-    Returns:
-        numpy array: The image with detected Hough lines.
-    """
+    """Detects and overlays Hough lines on the given image."""
     edges = cv2.Canny(image, 50, 150)
-
     lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=50, minLineLength=30, maxLineGap=10)
 
     output = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)  # Convert grayscale to BGR for visualization
@@ -23,15 +14,37 @@ def detect_hough_lines(image):
         for line in lines:
             x1, y1, x2, y2 = line[0]
             cv2.line(output, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Green lines
-
     return output
+
+
+def rotate_image(image, angle):
+    """Rotates an image without cropping it."""
+    h, w = image.shape[:2]
+    center = (w // 2, h // 2)
+
+    # Get rotation matrix
+    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+
+    # Compute the new bounding dimensions after rotation
+    cos = np.abs(M[0, 0])
+    sin = np.abs(M[0, 1])
+    new_w = int((h * sin) + (w * cos))
+    new_h = int((h * cos) + (w * sin))
+
+    # Adjust the matrix for translation
+    M[0, 2] += (new_w / 2) - center[0]
+    M[1, 2] += (new_h / 2) - center[1]
+
+    # Perform the rotation
+    rotated = cv2.warpAffine(image, M, (new_w, new_h))
+    return rotated
 
 
 # Load YOLO model
 model = YOLO(r"C:\Users\hotoe\Desktop\new models\best.pt")
 
 # Load image
-image_path = r"C:\Users\hotoe\Desktop\der.jpg"
+image_path = r"C:\Users\hotoe\Desktop\de.jpg"
 image = cv2.imread(image_path)
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB for Matplotlib
 
@@ -78,19 +91,16 @@ for box in results.boxes.xyxy:
             median_angle = np.median(angles)  # Get the most common angle
             print(f"Detected Angle: {median_angle}")
 
-            # Get rotation matrix
-            h, w = plate.shape[:2]
-            M = cv2.getRotationMatrix2D((w // 2, h // 2), median_angle, 1.0)
+            # Rotate both the cropped plate and the entire image
+            rotated_plate = rotate_image(plate, median_angle)
+            rotated_image = rotate_image(image, median_angle)
 
-            # Rotate the plate
-            rotated_plate = cv2.warpAffine(plate, M, (w, h))
-            rotated_plate = cv2.resize(rotated_plate, (640, 640))
             # Run YOLO again on the rotated plate
-            rotated_results = model(rotated_plate)[0]
+            rotated_results = model(rotated_image)[0]
 
             for rotated_box in rotated_results.boxes.xyxy:
                 x1, y1, x2, y2 = map(int, rotated_box.tolist())
-                cv2.rectangle(rotated_plate, (x1, y1), (x2, y2), (255, 0, 0), 2)  # Blue box
+                cv2.rectangle(rotated_image, (x1, y1), (x2, y2), (255, 0, 0), 2)  # Blue box
 
             # Enhance the image
             gray_rotated = cv2.cvtColor(rotated_plate, cv2.COLOR_RGB2GRAY)
@@ -116,7 +126,7 @@ for box in results.boxes.xyxy:
             axes[2].set_title("Cropped Plate (With Margin)")
             axes[2].axis("off")
 
-            axes[3].imshow(rotated_plate)
+            axes[3].imshow(rotated_image)
             axes[3].set_title("Rotated Plate (YOLO Again)")
             axes[3].axis("off")
 

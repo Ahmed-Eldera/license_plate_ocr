@@ -1,0 +1,5 @@
+paddle vs easyocr with numbers 
+
+study paddle more
+
+confidence , map -> mean avg percision  , percisiion and recall , f1 ??? , iou , confusion matrix , correlation matrix 

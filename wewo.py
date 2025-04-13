@@ -6,7 +6,7 @@ ocr = PaddleOCR(use_angle_cls=True, lang='ar')  # You can change 'en' to other l
 # List of image paths
 image_paths = [
     # r"021.jpg",  # Path to your image
-    r"tess.jpg",
+    r"01.jpg",
 ]
 
 # Loop through each image and perform OCR

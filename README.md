@@ -1,14 +1,31 @@
 # License_Plate_OCR
-a flask-server for the graduation project , it aims to detect the Egyption license plates from a camera feed and it extracts the letters & numbers from it.
-it takes an image as an input(post http-request) and responds with the result of the ocr
-Used a YOLO model (which we trained) , OpenCV and PaddleOCR .
 
-ToDos:
-- enhance the performance of the whole process
-- clean the code a little bit
-- increase the ocr accuracy
+Flask server for the graduation project — detects Egyptian license plates and extracts Arabic letters + numbers.
 
-How it works?
-first the yolo model detects the license plate then we rotate the image if the license plate is not horizontal.
-after rotating the image to make sure the license plate is horizontal we reapply yolo to get a more accurate bounding box/position of the licnese plate 
-then we crop the image and feed the ocr model with the cropped image containing only the license plate 
+- **Input:** `POST /upload` with `image` file
+- **Output:** `{"message": ["text1", "text2"]}` from PaddleOCR (`lang='ar'`)
+- **Stack:** YOLO (`best.pt`), OpenCV, PaddleOCR, EDSR x4 super-resolution (`EDSR_x4.pb`)
+
+## Quick start
+
+```bash
+pip install -r requirements.txt  # flask ultralytics opencv-python paddleocr numpy requests
+python app.py                    # -> http://127.0.0.1:5000
+python client.py ./A_hamdy.png   # test upload
+```
+
+## How it works
+
+1. YOLO detects plate, Hough `Canny`+`HoughLinesP` estimates skew, rotate whole image.
+2. Re-run YOLO on deskewed image for tighter box, crop with small negative margin, preprocess to gray 10:3 strip.
+3. Single EDSR x4 upsample, then `PaddleOCR(lang='ar')` (loaded once globally).
+
+## Branches
+
+- `main` — original
+- `cleanup/lean-2026` — cleaned demos/artifacts, optimized EDSR 4x (was 16x double), OCR global load
+
+## Notes
+
+- Generated `rec_neoplate_before/after.jpg` are gitignored debug dumps.
+- `tester.py` is batch eval (no Flask) — kept as legacy until `app.py` verified.

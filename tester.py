@@ -7,7 +7,6 @@ from paddleocr import PaddleOCR
 import os
 import time
 import contextlib
-import sys
 import io
 import logging
 logging.getLogger('ppocr').setLevel(logging.ERROR)  # or logging.CRITICAL to suppress more
@@ -23,12 +22,7 @@ def silent_yolo_inference(model, image):
     inference_time = end_time - start_time
     return results, inference_time
 
-# Initialize the PaddleOCR instance (this will use the default model which supports multiple languages, including Arabic and English)
-# ocr = PaddleOCR(use_angle_cls=True, lang='ar') 
-# Create an SR object - only function that differs from c++ code
 sr = dnn_superres.DnnSuperResImpl_create()
-# path = "LapSRN_x8.pb"  # Make sure this path matches the filename exactly
-# sr.readModel(path)
 
 # # Set the model type and the scale
 # sr.setModel("lapsrn", 8)

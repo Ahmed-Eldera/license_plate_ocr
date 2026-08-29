@@ -1,6 +1,8 @@
 # Generated artifacts - recreated on every run
-rec_neoplate_before.jpg
-rec_neoplate_after.jpg
+# rec_neoplate_before.jpg / rec_neoplate_after.jpg are now kept as README examples
+# Uncomment to ignore again if you don't want to commit them:
+# rec_neoplate_before.jpg
+# rec_neoplate_after.jpg
 upscaled.png
 corrected_plate.jpg
 yolo_times.txt

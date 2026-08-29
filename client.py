@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 url = 'http://127.0.0.1:5000/upload'
-image_path = sys.argv[1] if len(sys.argv) > 1 else './A_hamdy.png'
+image_path = sys.argv[1] if len(sys.argv) > 1 else './images.jpg'
 
 if not Path(image_path).exists():
     print(f"Image not found: {image_path}")

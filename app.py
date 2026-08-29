@@ -102,7 +102,7 @@ def action(image):
 
         # Super-resolve once (x4). Double 16x was too slow and produced huge images.
         result = sr.upsample(neoPlate)
-
+        # result = neoPlate
         cv2.imwrite(str(BASE_DIR / "rec_neoplate_after.jpg"), result)
         ocred = ocr.ocr(result, cls=True)
 

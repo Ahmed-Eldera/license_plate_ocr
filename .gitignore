@@ -1,0 +1,22 @@
+# Generated artifacts - recreated on every run
+rec_neoplate_before.jpg
+rec_neoplate_after.jpg
+upscaled.png
+corrected_plate.jpg
+yolo_times.txt
+times.txt
+ocr_time.txt
+whole_time.txt
+paddle_no_super_res.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+pip-log.txt
+
+# OS
+.DS_Store
+Thumbs.db
